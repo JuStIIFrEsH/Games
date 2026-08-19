@@ -1,0 +1,57 @@
+name: Build MMX:R Pages Runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MMX:R/build_local_files_launcher.ps1'
+      - 'MMX:R/launcher_shell.html'
+      - 'MMX:R/icon-192.png'
+      - 'MMX:R/icon-512.png'
+      - '.github/workflows/build-mmxr-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build pinned Godot 4.7 no-threads launcher
+        shell: powershell
+        run: |
+          & ".\MMX:R\build_local_files_launcher.ps1"
+
+      - name: Publish static runtime into MMX:R
+        shell: powershell
+        run: |
+          $source = "MMX:R\launcher_build"
+          $dest = "MMX:R"
+          $exclude = @("serve.ps1", "start_iphone_install.ps1", "index.pck")
+
+          Get-ChildItem $source -File | Where-Object { $exclude -notcontains $_.Name } | ForEach-Object {
+            Copy-Item $_.FullName (Join-Path $dest $_.Name) -Force
+          }
+
+          Remove-Item (Join-Path $dest "index.pck") -Force -ErrorAction SilentlyContinue
+
+          Write-Host "Published files:"
+          Get-ChildItem $dest -File | Sort-Object Name | Select-Object Name, Length | Format-Table -AutoSize
+
+      - name: Commit generated runtime
+        shell: powershell
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "MMX:R"
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "No generated changes to commit."
+            exit 0
+          }
+          git commit -m "Build MMX:R Godot 4.7 Pages runtime [skip ci]"
+          git push
