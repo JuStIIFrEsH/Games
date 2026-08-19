@@ -1,0 +1,6 @@
+*.pck
+*.apk
+*.zip
+work/
+launcher_build/
+.DS_Store
