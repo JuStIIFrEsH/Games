@@ -9,6 +9,10 @@ on:
       - 'MMX:R/icon-192.png'
       - 'MMX:R/icon-512.png'
       - '.github/workflows/build-mmxr-pages.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'MMX:R/**'
   workflow_dispatch:
 
 permissions:
@@ -18,8 +22,10 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Check out repository
+      - name: Check out main for publishing
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Build pinned Godot 4.7 no-threads launcher
         shell: powershell
@@ -42,7 +48,7 @@ jobs:
           Write-Host "Published files:"
           Get-ChildItem $dest -File | Sort-Object Name | Select-Object Name, Length | Format-Table -AutoSize
 
-      - name: Commit generated runtime
+      - name: Commit generated runtime to main
         shell: powershell
         run: |
           git config user.name "github-actions[bot]"
@@ -54,4 +60,4 @@ jobs:
             exit 0
           }
           git commit -m "Build MMX:R Godot 4.7 Pages runtime [skip ci]"
-          git push
+          git push origin HEAD:main
