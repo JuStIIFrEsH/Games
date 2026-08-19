@@ -1,12 +1,9 @@
-const CACHE = "regenesis-local-launcher-v1";
+const CACHE = "regenesis-local-launcher-v2";
 const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
-  "./index.audio.position.worklet.js",
-  "./index.audio.worklet.js",
   "./index.html",
   "./index.js",
-  "./index.png",
   "./index.wasm",
   "./launcher_shell.html",
   "./manifest.webmanifest"
@@ -37,6 +34,7 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+
   if (event.request.mode === "navigate") {
     event.respondWith(
       caches.match("./index.html", { ignoreSearch: true })
@@ -44,6 +42,7 @@ self.addEventListener("fetch", event => {
     );
     return;
   }
+
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true })
       .then(hit => hit || fetch(event.request))
